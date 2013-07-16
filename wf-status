@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -e
+
+WF_DIR=$1
+if [ "x$1" = "x" ]; then
+    echo "Please specify workflow directory" 1>&2
+    exit 1
+fi
+
+cd $WF_DIR
+
+if [ ! -e braindump.txt ]; then
+    echo "braindump.txt was not found in this directory. Planner probably failed!" 1>&2
+    exit 1
+fi
+
+STATUS=`pegasus-status --noqueue | tail -1 | sed 's/[:\(\)]/ /g'| awk '{print $5}'`
+STATS=`pegasus-status | grep -A 1 '%DONE' | tail -1`
+PERCENT=0
+if [ "x$STATS" != "x" ]; then
+    PERCENT=`echo "$STATS" | awk '{print $8}'`
+fi
+
+echo "STATUS=$STATUS"
+echo "PERCENT_DONE=$PERCENT"
+

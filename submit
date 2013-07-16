@@ -1,0 +1,60 @@
+#!/bin/bash
+
+set -e
+
+TOP_DIR=`pwd`
+
+# unique directory for this run
+RUN_ID=`/bin/date +'%F_%H%M%S'`
+RUN_DIR=/local-scratch/$USER/workflows/vina-$RUN_ID
+mkdir -p $RUN_DIR
+cd $RUN_DIR
+
+echo " ** "
+echo " ** Run dir is $RUN_DIR"
+echo " ** "
+
+# move to the run dir for dax generation
+cp -r $TOP_DIR/* $RUN_DIR/
+cd $RUN_DIR/
+
+# generate the dax
+export PYTHONPATH=`pegasus-config --python`
+./dax-generator.py
+
+# create the site catalog
+cat >sites.xml <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<sitecatalog xmlns="http://pegasus.isi.edu/schema/sitecatalog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pegasus.isi.edu/schema/sitecatalog http://pegasus.isi.edu/schema/sc-4.0.xsd" version="4.0">
+
+    <site handle="local" arch="x86_64">
+        <directory type="shared-scratch" path="$RUN_DIR/scratch">
+            <file-server operation="all" url="file://$RUN_DIR/scratch"/>
+        </directory>
+        <directory type="local-storage" path="$RUN_DIR/outputs">
+            <file-server operation="all" url="file://$RUN_DIR/outputs"/>
+        </directory>
+    </site>
+
+    <site handle="condorpool" arch="x86_64">
+        <profile namespace="pegasus" key="style" >condor</profile>
+        <profile namespace="condor" key="universe" >vanilla</profile>
+        <profile namespace="condor" key="+ProjectName" >"OSG-Staff"</profile>
+    </site>
+
+</sitecatalog>
+EOF
+
+# plan and submit the  workflow
+pegasus-plan \
+    --conf pegasusrc \
+    --sites condorpool \
+    --output-site local \
+    --dir $RUN_DIR/run \
+    --dax dax-top.xml \
+    --submit \
+    2>&1 | tee submit.log
+
+RUN_DIR=`grep pegasus-remove submit.log | awk '{print $5}'`
+echo "JOB_ID=${RUN_DIR}"
+
