@@ -39,7 +39,7 @@ cat >sites.xml <<EOF
     <site handle="condorpool" arch="x86_64">
         <profile namespace="pegasus" key="style" >condor</profile>
         <profile namespace="condor" key="universe" >vanilla</profile>
-        <profile namespace="condor" key="+ProjectName" >"OSG-Staff"</profile>
+        <profile namespace="condor" key="+ProjectName" >"TG-MCB130072"</profile>
     </site>
 
 </sitecatalog>
