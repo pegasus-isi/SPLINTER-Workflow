@@ -10,7 +10,7 @@ base_dir = os.getcwd()
 ##############################
 
 ## Number of receptors to group together in a sub workflow
-numReceptoresSubWF = 25
+num_recs_per_sub_wf = 1
 
 ## Location of receptor PDBQTs
 receptor_dir = base_dir + '/inputs/rec'
@@ -98,7 +98,7 @@ subdax_generator.addPFN(PFN("file://" + base_dir + "/subdax-generator.py", "loca
 dax.addExecutable(subdax_generator)
 
 subwfID = 1
-for recSubList in splitlist(recList, numReceptoresSubWF):
+for recSubList in splitlist(recList, num_recs_per_sub_wf):
     print "  generarating subworkflow %06d" % (subwfID)
     add_subwf(dax, subwfID, "%06d" % subwfID, recSubList)
     subwfID += 1
