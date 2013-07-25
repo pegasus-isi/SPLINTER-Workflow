@@ -80,8 +80,12 @@ for rec_file in rec_files:
             subdax.addFile(lig_pdbqt_file)
             subdax.addFile(mol2_file)
 
-        # load arguments
-        center = open(receptor_dir + "/" + rec_file.name[:-6] + '/' + rec_file.name[:-6] + '.center').readline().strip().split()
+        # load arguments (center.txt or [rec].center)
+        center = None
+        if os.path.isfile(receptor_dir + "/" + rec_file.name[:-6] + '/center.txt'):
+            center = open(receptor_dir + "/" + rec_file.name[:-6] + '/center.txt').readline().strip().split()
+        else:
+            center = open(receptor_dir + "/" + rec_file.name[:-6] + '/' + rec_file.name[:-6] + '.center').readline().strip().split()
         
         # Output file
         out_file = File(rec_file.name[:-6] + '-' + lig_pdbqt_file.name[:-6] + '.mol2')
