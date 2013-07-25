@@ -13,13 +13,10 @@ base_dir = os.getcwd()
 numReceptoresSubWF = 25
 
 ## Location of receptor PDBQTs
-receptorDir = base_dir + '/inputs/rec'
+receptor_dir = base_dir + '/inputs/rec'
 
-## Location of ligand PDBQTs
-ligandpdbqtDir = base_dir + '/inputs/lig/pdbqt'
-
-## Location of ligand MOL2s
-ligandmol2Dir = base_dir + '/inputs/lig/mol2'
+## Location of ligand PDBQTs and MOL2s
+ligand_dir = base_dir + '/inputs/lig'
 
 ##############################
 
@@ -56,9 +53,8 @@ def add_subwf(dax, id, id_formatted, receptors):
                             "%d" % id,
                             "%d" % priority,
                             receptors_fname,
-                            receptorDir,
-                            ligandpdbqtDir,
-                            ligandmol2Dir,
+                            receptor_dir,
+                            ligand_dir,
                             subdax_fname)
     subdax_gen.uses(receptors_file, link=Link.INPUT)
     subdax_gen.addProfile(Profile("dagman", "PRIORITY", "%d" % (priority)))
@@ -87,11 +83,11 @@ def add_subwf(dax, id, id_formatted, receptors):
 
 # build a list of the receptors we want to process
 recList = []
-for rec in os.listdir(receptorDir):
+for rec in os.listdir(receptor_dir):
     recList.append(rec)
 
 # top level workflow
-dax = ADAG("vina")
+dax = ADAG("splinter")
     
 # notifcations on state changes for the dax
 dax.invoke("all", "/usr/share/pegasus/notification/email")

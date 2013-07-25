@@ -2,11 +2,17 @@
 
 set -e
 
+PROJECT=$1
+if [ "x$PROJECT" = "x" ]; then
+    echo "Please specify the project id to charge the workflow usage to. Example: ./submit TG-ABC123" 2>&1
+    exit 1
+fi
+
 TOP_DIR=`pwd`
 
 # unique directory for this run
 RUN_ID=`/bin/date +'%F_%H%M%S'`
-RUN_DIR=/local-scratch/$USER/workflows/vina-$RUN_ID
+RUN_DIR=/local-scratch/$USER/workflows/splinter-$RUN_ID
 mkdir -p $RUN_DIR
 cd $RUN_DIR
 
@@ -39,7 +45,7 @@ cat >sites.xml <<EOF
     <site handle="condorpool" arch="x86_64">
         <profile namespace="pegasus" key="style" >condor</profile>
         <profile namespace="condor" key="universe" >vanilla</profile>
-        <profile namespace="condor" key="+ProjectName" >"TG-MCB130072"</profile>
+        <profile namespace="condor" key="+ProjectName" >"$PROJECT"</profile>
     </site>
 
 </sitecatalog>
