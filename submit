@@ -3,8 +3,12 @@
 set -e
 
 PROJECT=$1
-if [ "x$PROJECT" = "x" ]; then
-    echo "Please specify the project id to charge the workflow usage to. Example: ./submit TG-ABC123" 2>&1
+REC_DIR=$2
+LIG_DIR=$3
+if [ "x$PROJECT" = "x" -o "x$REC_DIR" = "x" -o "x$LIG_DIR" = "x" ]; then
+    echo "Please specify the project id to charge the workflow usage to," 2>&1
+    echo "the receptor directory, and the ligand directory. Example:" 2>&1
+    echo "  ./submit TG-ABC123 /some/path/receptors /some/path/ligands" 2>&1
     exit 1
 fi
 
@@ -26,7 +30,7 @@ cd $RUN_DIR/
 
 # generate the dax
 export PYTHONPATH=`pegasus-config --python`
-./dax-generator.py
+./dax-generator.py $REC_DIR $LIG_DIR
 
 # create the site catalog
 cat >sites.xml <<EOF

@@ -4,21 +4,41 @@ from Pegasus.DAX3 import *
 
 import sys
 import os
+from stat import *
+
+##############################
+## Settings
+
+# Maximum tasks in a sub workflow
+max_tasks_per_sub_wf = 20000
+
+##############################
 
 base_dir = os.getcwd()
 
-##############################
+receptor_dir = sys.argv[1]
+ligand_dir = sys.argv[2]
 
-## Number of receptors to group together in a sub workflow
-num_recs_per_sub_wf = 1
+# globals
+rec_names = []  
+lig_pdbqt_files = []
+lig_mol2_files = {}
 
-## Location of receptor PDBQTs
-receptor_dir = base_dir + '/inputs/rec'
 
-## Location of ligand PDBQTs and MOL2s
-ligand_dir = base_dir + '/inputs/lig'
-
-##############################
+def find_ligands(dir):
+    global lig_pdbqt_files
+    global lig_mol2_files
+    for entry in os.listdir(dir):
+        path = os.path.join(dir, entry)
+        mode = os.stat(path).st_mode
+        if S_ISDIR(mode): 
+            find_ligands(path)
+        else:
+            f_base, f_ext = os.path.splitext(entry)
+            if f_ext == ".pdbqt":
+                lig_pdbqt_files.append(path)
+            elif f_ext == ".mol2":
+                lig_mol2_files[f_base] = path
 
 
 def splitlist(lst, slicelen):
@@ -26,22 +46,14 @@ def splitlist(lst, slicelen):
         yield lst[i:i + slicelen]
 
 
-def add_subwf(dax, id, id_formatted, receptors):
+def add_subwf(dax, id):
 
     priority = 1000 - id
-    receptors_fname = "receptors-%s.txt" % id_formatted
-    subdax_fname = "dax-%s.xml" % id_formatted
-    
-    # create the receptors file
-    f = open(receptors_fname, "w")
-    for rec in receptors:
-        f.write(rec)
-        f.write("\n")
-    f.close()
+    subdax_fname = "dax-%06d.xml" % id
 
-    receptors_file = File(receptors_fname)
-    receptors_file.addPFN(PFN("file://%s/%s" % (base_dir, receptors_fname), "local"))
-    dax.addFile(receptors_file)
+    work_file = File("work-%06d.txt" % id)
+    work_file.addPFN(PFN("file://%s/work-%06d.txt" % (base_dir, id), "local"))
+    dax.addFile(work_file)
     
     subdax_file = File(subdax_fname)
     subdax_file.addPFN(PFN("file://%s/%s" % (base_dir, subdax_fname), "local"))
@@ -52,11 +64,9 @@ def add_subwf(dax, id, id_formatted, receptors):
     subdax_gen.addArguments(base_dir,
                             "%d" % id,
                             "%d" % priority,
-                            receptors_fname,
-                            receptor_dir,
-                            ligand_dir,
+                            "work-%06d.txt" % (id),
                             subdax_fname)
-    subdax_gen.uses(receptors_file, link=Link.INPUT)
+    subdax_gen.uses(work_file, link=Link.INPUT)
     subdax_gen.addProfile(Profile("dagman", "PRIORITY", "%d" % (priority)))
     subdax_gen.addProfile(Profile("hints", "executionPool", "local"))
     subdax_gen.addProfile(Profile("env", "PATH", os.environ['PATH']))
@@ -65,11 +75,11 @@ def add_subwf(dax, id, id_formatted, receptors):
     dax.addJob(subdax_gen)
 
     # job to run subwf
-    subwf = DAX(subdax_fname, id="sub-%s" % (id_formatted))
+    subwf = DAX(subdax_fname, id="sub-%06d" % (id))
     subwf.addArguments("-Dpegasus.catalog.site.file=%s/sites.xml" % (base_dir),
                        "--cluster", "horizontal",
                        "--sites", "condorpool",
-                       "--basename", id_formatted,
+                       "--basename", "%06d" % id,
                        "--force",
                        "--output-site", "local")
     subwf.uses(subdax_file, link=Link.INPUT, register=False)
@@ -81,10 +91,10 @@ def add_subwf(dax, id, id_formatted, receptors):
 
 
 
-# build a list of the receptors we want to process
-recList = []
+# build a list of the receptors and ligands we want to process
 for rec in os.listdir(receptor_dir):
-    recList.append(rec)
+    rec_names.append(rec)
+find_ligands(ligand_dir)
 
 # top level workflow
 dax = ADAG("splinter")
@@ -97,11 +107,33 @@ subdax_generator = Executable(name="subdax-generator.py", arch="x86_64", install
 subdax_generator.addPFN(PFN("file://" + base_dir + "/subdax-generator.py", "local"))
 dax.addExecutable(subdax_generator)
 
-subwfID = 1
-for recSubList in splitlist(recList, num_recs_per_sub_wf):
-    print "  generarating subworkflow %06d" % (subwfID)
-    add_subwf(dax, subwfID, "%06d" % subwfID, recSubList)
-    subwfID += 1
+subwf_id = 1
+subwf_task_count = 0
+work_file = open("work-%06d.txt" %(1), 'w')
+for rec_name in rec_names:
+ 
+    rec_location = receptor_dir + "/" + rec_name
+
+    for lig_pdbqt_file in lig_pdbqt_files:
+
+        lig_name = os.path.splitext(os.path.basename(lig_pdbqt_file))[0]
+    
+        if subwf_task_count > max_tasks_per_sub_wf:
+            work_file.close()
+            print "  generarating subworkflow %06d" % (subwf_id)
+            add_subwf(dax, subwf_id)
+            
+            subwf_id += 1
+            work_file = open("work-%06d.txt" % subwf_id, 'w')
+            subwf_task_count = 0
+
+        subwf_task_count += 1
+        work_file.write("%s\t%s\t%s\t%s\t%s\n" %(rec_name, rec_location, lig_name, lig_pdbqt_file, lig_mol2_files[lig_name]))
+
+if subwf_task_count > 0:
+    work_file.close()
+    print "  generarating subworkflow %06d" % (subwf_id)
+    add_subwf(dax, subwf_id)
 
 # Write the DAX
 f = open("dax-top.xml", "w")

@@ -10,44 +10,12 @@ from stat import *
 base_dir =  sys.argv[1]
 id = sys.argv[2]
 priority = sys.argv[3]
-receptors_fname = sys.argv[4]
-receptor_dir = sys.argv[5]
-ligand_dir = sys.argv[6]
-subdax_fname = sys.argv[7]
+work_fname = sys.argv[4]
+subdax_fname = sys.argv[5]
 
-# globals
-rec_files = []
-lig_pdbqt_files = []
-lig_mol2_files = {}
-
-def find_ligands(dir):
-    global lig_pdbqt_files
-    global lig_mol2_files
-    for entry in os.listdir(dir):
-        path = os.path.join(dir, entry)
-        mode = os.stat(path).st_mode
-        if S_ISDIR(mode):
-            find_ligands(path)
-        else:
-            f_base, f_ext = os.path.splitext(entry)
-            if f_ext == ".pdbqt":
-                lig_pdbqt_file = File(entry)
-                lig_pdbqt_file.addPFN(PFN("file://" + path, "local"))
-                lig_pdbqt_files.append(lig_pdbqt_file)
-            elif f_ext == ".mol2":
-                mol2_file = File(entry)
-                mol2_file.addPFN(PFN("file://" + path, "local"))
-                lig_mol2_files[f_base] = mol2_file
-    
-# make lists of all the input files - doing this once and reusing
-# the lists speeds up the dax generation process
-recList = [ x.strip() for x in open(receptors_fname) ]
-for rec in recList:
-    rec_file = File(rec + '.pdbqt')
-    rec_file.addPFN(PFN("file://" + receptor_dir + "/" + rec + '/' + rec + '.pdbqt', "local"))
-    rec_files.append(rec_file)
-
-find_ligands(ligand_dir)
+receptors_saved = {}
+ligands_pdbqt_saved = {}
+ligands_mol2_saved = {}
 
 # Create a abstract dag
 subdax = ADAG("splinter-" + id)
@@ -56,7 +24,7 @@ subdax = ADAG("splinter-" + id)
 wrapper = Executable(name="vina_wrapper.sh", arch="x86_64", installed=False)
 wrapper.addPFN(PFN("file://" + base_dir + "/vina_wrapper.sh", "local"))
 wrapper.addProfile(Profile(Namespace.CONDOR, "priority", priority))
-wrapper.addProfile(Profile(Namespace.PEGASUS, "clusters.size", 5))
+wrapper.addProfile(Profile(Namespace.PEGASUS, "clusters.size", 10))
 subdax.addExecutable(wrapper)
 
 # sub-executables (added as input files)
@@ -67,39 +35,54 @@ endscriptFile = File("pdbqt2mol2.py")
 endscriptFile.addPFN(PFN("file://" + base_dir + "/pdbqt2mol2.py", "local"))
 subdax.addFile(endscriptFile)
 
-innerCount = 0
-for rec_file in rec_files:
-    subdax.addFile(rec_file)
-    innerCount += 1
-    for lig_pdbqt_file in lig_pdbqt_files:
-
-        mol2_file = lig_mol2_files[lig_pdbqt_file.name[:-6]]
-
-        # only add the files to the dax one
-        if innerCount == 1:
-            subdax.addFile(lig_pdbqt_file)
-            subdax.addFile(mol2_file)
-
-        # load arguments (center.txt or [rec].center)
-        center = None
-        if os.path.isfile(receptor_dir + "/" + rec_file.name[:-6] + '/center.txt'):
-            center = open(receptor_dir + "/" + rec_file.name[:-6] + '/center.txt').readline().strip().split()
-        else:
-            center = open(receptor_dir + "/" + rec_file.name[:-6] + '/' + rec_file.name[:-6] + '.center').readline().strip().split()
+work_file = open(work_fname)
+for line in work_file:
+    line = line.strip()
+    rec_name, rec_location, lig_name, lig_pdbqt_location, lig_mol2_location = line.split("\t")
         
-        # Output file
-        out_file = File(rec_file.name[:-6] + '-' + lig_pdbqt_file.name[:-6] + '.mol2')
+    # only add the files to the dax one
+    if not rec_name in receptors_saved:
+        f = File(rec_name + '.pdbqt')
+        f.addPFN(PFN("file://" + rec_location + '/' + rec_name + '.pdbqt', "local"))
+        subdax.addFile(f)
+        receptors_saved[rec_name] = f
+    if not lig_name in ligands_pdbqt_saved:
+        f = File(lig_name + '.pdbqt')
+        f.addPFN(PFN("file://" + lig_pdbqt_location, "local"))
+        subdax.addFile(f)
+        ligands_pdbqt_saved[lig_name] = f
+        # and also the mol2 file
+        f = File(lig_name + '.mol2')
+        f.addPFN(PFN("file://" + lig_mol2_location, "local"))
+        subdax.addFile(f)
+        ligands_mol2_saved[lig_name] = f
 
-        # Add job to dax
-        job = Job(name="vina_wrapper.sh")
-        job.addArguments(rec_file.name[:-6], lig_pdbqt_file.name[:-6], center[0], center[1], center[2])
-        job.uses(vina_file, link=Link.INPUT)
-        job.uses(endscriptFile, link=Link.INPUT)
-        job.uses(rec_file, link=Link.INPUT)
-        job.uses(lig_pdbqt_file, link=Link.INPUT)
-        job.uses(mol2_file, link=Link.INPUT)
-        job.uses(out_file, link=Link.OUTPUT)
-        subdax.addJob(job)
+    # load arguments (center.txt or [rec].center)
+    center = None
+    if os.path.isfile(rec_location + '/center.txt'):
+        center = open(rec_location + '/center.txt').readline().strip().split()
+    else:
+        center = open(rec_location + '/' + rec_name + '.center').readline().strip().split()
+
+    # sometimes the first column is the receptor name
+    if rec_name == center[0]:
+        center[0] = center[1]
+        center[1] = center[2]
+        center[2] = center[3]
+    
+    # Output file
+    out_file = File(rec_name + '-' + lig_name + '.mol2')
+
+    # Add job to dax
+    job = Job(name="vina_wrapper.sh")
+    job.addArguments(rec_name, lig_name, center[0], center[1], center[2])
+    job.uses(vina_file, link=Link.INPUT)
+    job.uses(endscriptFile, link=Link.INPUT)
+    job.uses(receptors_saved[rec_name], link=Link.INPUT)
+    job.uses(ligands_pdbqt_saved[lig_name], link=Link.INPUT)
+    job.uses(ligands_mol2_saved[lig_name], link=Link.INPUT)
+    job.uses(out_file, link=Link.OUTPUT)
+    subdax.addJob(job)
 
 # Write the DAX
 f = open(base_dir + "/" + subdax_fname, "w")
