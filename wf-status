@@ -16,12 +16,10 @@ if [ ! -e braindump.txt ]; then
 fi
 
 STATUS=`pegasus-status --noqueue | tail -1 | sed 's/[:\(\)]/ /g'| awk '{print $5}'`
-STATS=`pegasus-status | grep -A 1 '%DONE' | tail -1`
-PERCENT=0
-if [ "x$STATS" != "x" ]; then
-    PERCENT=`echo "$STATS" | awk '{print $8}'`
-fi
-
 echo "STATUS=$STATUS"
-echo "PERCENT_DONE=$PERCENT"
+
+pegasus-status --noqueue --rows \
+  | sed 's/: /=/' \
+  | sed 's/%DONE/PERCENT_DONE/' \
+  | grep -v ^Summary
 
