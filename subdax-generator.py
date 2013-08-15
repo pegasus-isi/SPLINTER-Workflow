@@ -8,7 +8,7 @@ from stat import *
 
 # the top level workflow generator is passing a bunch of stuff to us
 base_dir =  sys.argv[1]
-id = sys.argv[2]
+id = int(sys.argv[2])
 priority = sys.argv[3]
 work_fname = sys.argv[4]
 subdax_fname = sys.argv[5]
@@ -18,13 +18,13 @@ ligands_pdbqt_saved = {}
 ligands_mol2_saved = {}
 
 # Create a abstract dag
-subdax = ADAG("splinter-" + id)
+subdax = ADAG("splinter-%06d" % id)
 
 # Add executables to the DAX-level replica catalog
 wrapper = Executable(name="vina_wrapper.sh", arch="x86_64", installed=False)
 wrapper.addPFN(PFN("file://" + base_dir + "/vina_wrapper.sh", "local"))
 wrapper.addProfile(Profile(Namespace.CONDOR, "priority", priority))
-wrapper.addProfile(Profile(Namespace.PEGASUS, "clusters.size", 10))
+wrapper.addProfile(Profile(Namespace.PEGASUS, "clusters.size", 20))
 subdax.addExecutable(wrapper)
 
 # sub-executables (added as input files)
@@ -71,11 +71,11 @@ for line in work_file:
         center[2] = center[3]
     
     # Output file
-    out_file = File(rec_name + '-' + lig_name + '.mol2')
+    out_file = File("%s-%s.mol2" % (rec_name, lig_name))
 
     # Add job to dax
     job = Job(name="vina_wrapper.sh")
-    job.addArguments(rec_name, lig_name, center[0], center[1], center[2])
+    job.addArguments("%06d" % id, rec_name, lig_name, center[0], center[1], center[2])
     job.uses(vina_file, link=Link.INPUT)
     job.uses(endscriptFile, link=Link.INPUT)
     job.uses(receptors_saved[rec_name], link=Link.INPUT)
