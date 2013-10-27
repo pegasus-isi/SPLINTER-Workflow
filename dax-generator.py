@@ -10,7 +10,7 @@ from stat import *
 ## Settings
 
 # Maximum tasks in a sub workflow
-max_tasks_per_sub_wf = 20000
+max_tasks_per_sub_wf = 10000
 
 ##############################
 
@@ -81,6 +81,7 @@ def add_subwf(dax, id):
                        "--sites", "condorpool",
                        "--basename", "%06d" % id,
                        "--force",
+                       "--force-replan",
                        "--output-site", "local")
     subwf.uses(subdax_file, link=Link.INPUT, register=False)
     subwf.addProfile(Profile("dagman", "PRIORITY", "%d" % (priority)))
