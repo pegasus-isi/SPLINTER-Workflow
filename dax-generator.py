@@ -10,7 +10,7 @@ from stat import *
 ## Settings
 
 # Maximum tasks in a sub workflow
-max_tasks_per_sub_wf = 10000
+max_tasks_per_sub_wf = 20000
 
 ##############################
 

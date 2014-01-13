@@ -6,7 +6,7 @@ pegasus.condor.logs.symlink = false
 
 pegasus.data.configuration = condorio
 
-dagman.subworkflow.maxjobs = 40
-dagman.maxidle = 1000
+dagman.subworkflow.maxjobs = 100
+dagman.maxidle = 300
 
 
