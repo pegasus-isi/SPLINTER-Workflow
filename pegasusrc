@@ -1,3 +1,6 @@
+
+pegasus.metrics.app = SPLINTER
+
 pegasus.catalog.site.file = sites.xml
 
 pegasus.dir.useTimestamp = true
@@ -8,6 +11,8 @@ pegasus.data.configuration = condorio
 
 dagman.subworkflow.maxjobs = 75
 dagman.maxidle = 300
+
+pegasus.transfer.bypass.input.staging = true
 
 pegasus.stagein.clusters = 1
 pegasus.stageout.clusters = 1
