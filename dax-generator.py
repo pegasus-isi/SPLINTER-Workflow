@@ -16,8 +16,10 @@ max_tasks_per_sub_wf = 20000
 
 base_dir = os.getcwd()
 
-receptor_dir = sys.argv[1]
-ligand_dir = sys.argv[2]
+run_id = sys.argv[1]
+run_dir = sys.argv[2]
+receptor_dir = sys.argv[3]
+ligand_dir = sys.argv[4]
 
 # globals
 rec_names = []  
@@ -58,7 +60,7 @@ def add_subwf(dax, id):
     subdax_file = File(subdax_fname)
     subdax_file.addPFN(PFN("file://%s/%s" % (base_dir, subdax_fname), "local"))
     dax.addFile(subdax_file)
-
+    
     # job to generate the subdax
     subdax_gen = Job(name="subdax-generator.py")
     subdax_gen.addArguments(base_dir,
@@ -90,6 +92,15 @@ def add_subwf(dax, id):
     dax.addDAX(subwf)
     dax.depends(parent=subdax_gen, child=subwf)
 
+    # post dax job
+    postsubdax = Job(name="postsubdax.sh")
+    postsubdax.addArguments(run_dir,
+                            run_id,
+                            "%06d" % id)
+    postsubdax.addProfile(Profile("hints", "executionPool", "local"))
+    postsubdax.addProfile(Profile("env", "PATH", os.environ['PATH']))
+    dax.addJob(postsubdax)
+    dax.depends(parent=subwf, child=postsubdax)
 
 
 # build a list of the receptors and ligands we want to process
@@ -107,6 +118,10 @@ dax.invoke("all", "/usr/share/pegasus/notification/email")
 subdax_generator = Executable(name="subdax-generator.py", arch="x86_64", installed=False)
 subdax_generator.addPFN(PFN("file://" + base_dir + "/subdax-generator.py", "local"))
 dax.addExecutable(subdax_generator)
+
+postsubdax_sh = Executable(name="postsubdax.sh", arch="x86_64", installed=False)
+postsubdax_sh.addPFN(PFN("file://" + base_dir + "/postsubdax.sh", "local"))
+dax.addExecutable(postsubdax_sh)
 
 subwf_id = 1
 subwf_task_count = 0

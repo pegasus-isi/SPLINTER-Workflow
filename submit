@@ -30,7 +30,7 @@ cd $RUN_DIR/
 
 # generate the dax
 export PYTHONPATH=`pegasus-config --python`
-./dax-generator.py $REC_DIR $LIG_DIR
+./dax-generator.py $RUN_ID $RUN_DIR $REC_DIR $LIG_DIR
 
 # create the site catalog
 cat >sites.xml <<EOF
@@ -44,6 +44,7 @@ cat >sites.xml <<EOF
         <directory type="local-storage" path="$RUN_DIR/outputs">
             <file-server operation="all" url="file://$RUN_DIR/outputs"/>
         </directory>
+        <profile namespace="condor" key="+ProjectName" >"$PROJECT"</profile>
     </site>
 
     <site handle="condorpool" arch="x86_64">
@@ -58,9 +59,10 @@ EOF
 # plan and submit the  workflow
 pegasus-plan \
     --conf pegasusrc \
+    --dir $RUN_DIR/run \
+    --relative-dir $RUN_ID \
     --sites condorpool \
     --output-site local \
-    --dir $RUN_DIR/run \
     --dax dax-top.xml \
     --submit \
     2>&1 | tee submit.log
