@@ -95,7 +95,10 @@ def add_subwf(dax, id):
     postsubdax.addArguments(run_dir,
                             run_id,
                             "%06d" % id)
-    postsubdax.addProfile(Profile("hints", "executionPool", "local"))
+    postsubdax.addProfile(Profile(Namespace.PEGASUS, "style", "condor"))
+    postsubdax.addProfile(Profile(Namespace.CONDOR, "universe", "vanilla"))
+    postsubdax.addProfile(Profile(Namespace.CONDOR, "requirements", "TARGET.FileSystemDomain =?= \"osg-xsede.grid.iu.edu\""))
+    postsubdax.addProfile(Profile(Namespace.CONDOR, "+RunOnSubmitNode", "True"))
     postsubdax.addProfile(Profile("env", "PATH", os.environ['PATH']))
     dax.addJob(postsubdax)
     dax.depends(parent=subwf, child=postsubdax)
