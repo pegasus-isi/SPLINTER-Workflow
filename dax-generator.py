@@ -50,7 +50,7 @@ def splitlist(lst, slicelen):
 
 def add_subwf(dax, id):
 
-    priority = 1000 - id
+    priority = 10000 - id
     subdax_fname = "dax-%06d.xml" % id
 
     work_file = File("work-%06d.txt" % id)
