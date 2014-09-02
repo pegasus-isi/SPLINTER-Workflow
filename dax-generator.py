@@ -10,7 +10,7 @@ from stat import *
 ## Settings
 
 # Maximum tasks in a sub workflow
-max_tasks_per_sub_wf = 20000
+max_tasks_per_sub_wf = 10000
 
 ##############################
 
@@ -97,7 +97,7 @@ def add_subwf(dax, id):
                             "%06d" % id)
     postsubdax.addProfile(Profile(Namespace.PEGASUS, "style", "condor"))
     postsubdax.addProfile(Profile(Namespace.CONDOR, "universe", "vanilla"))
-    postsubdax.addProfile(Profile(Namespace.CONDOR, "requirements", "TARGET.FileSystemDomain =?= \"osg-xsede.grid.iu.edu\""))
+    postsubdax.addProfile(Profile(Namespace.CONDOR, "requirements", "TARGET.FileSystemDomain =?= \"xd-login.opensciencegrid.org\""))
     postsubdax.addProfile(Profile(Namespace.CONDOR, "+RunOnSubmitNode", "True"))
     postsubdax.addProfile(Profile("env", "PATH", os.environ['PATH']))
     dax.addJob(postsubdax)

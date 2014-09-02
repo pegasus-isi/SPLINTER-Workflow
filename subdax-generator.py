@@ -26,7 +26,7 @@ pt = Executable(namespace="pegasus", name="transfer", arch="x86_64", installed=T
 pt.addPFN(PFN("/usr/bin/pegasus-transfer", "local"))
 pt.addProfile(Profile(Namespace.PEGASUS, "style", "condor"))
 pt.addProfile(Profile(Namespace.CONDOR, "universe", "vanilla"))
-pt.addProfile(Profile(Namespace.CONDOR, "requirements", "TARGET.FileSystemDomain =?= \"osg-xsede.grid.iu.edu\""))
+pt.addProfile(Profile(Namespace.CONDOR, "requirements", "TARGET.FileSystemDomain =?= \"xd-login.opensciencegrid.org\""))
 pt.addProfile(Profile(Namespace.CONDOR, "+RunOnSubmitNode", "True"))
 subdax.addExecutable(pt)
 
@@ -34,7 +34,7 @@ subdax.addExecutable(pt)
 wrapper = Executable(name="vina_wrapper.sh", arch="x86_64", installed=False)
 wrapper.addPFN(PFN("file://" + base_dir + "/vina_wrapper.sh", "local"))
 wrapper.addProfile(Profile(Namespace.CONDOR, "priority", priority))
-wrapper.addProfile(Profile(Namespace.PEGASUS, "clusters.size", 50))
+wrapper.addProfile(Profile(Namespace.PEGASUS, "clusters.size", 40))
 subdax.addExecutable(wrapper)
 
 # sub-executables (added as input files)
