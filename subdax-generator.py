@@ -34,7 +34,7 @@ subdax.addExecutable(pt)
 wrapper = Executable(name="vina_wrapper.sh", arch="x86_64", installed=False)
 wrapper.addPFN(PFN("file://" + base_dir + "/vina_wrapper.sh", "local"))
 wrapper.addProfile(Profile(Namespace.CONDOR, "priority", priority))
-wrapper.addProfile(Profile(Namespace.PEGASUS, "clusters.size", 40))
+wrapper.addProfile(Profile(Namespace.PEGASUS, "clusters.size", 15))
 subdax.addExecutable(wrapper)
 
 # sub-executables (added as input files)

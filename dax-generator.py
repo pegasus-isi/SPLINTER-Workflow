@@ -10,7 +10,7 @@ from stat import *
 ## Settings
 
 # Maximum tasks in a sub workflow
-max_tasks_per_sub_wf = 10000
+max_tasks_per_sub_wf = 25000
 
 ##############################
 
@@ -82,7 +82,8 @@ def add_subwf(dax, id):
                        "--cluster", "horizontal",
                        "--sites", "condorpool",
                        "--basename", "%06d" % id,
-                       "--output-site", "local")
+                       "--force",
+                       "--cleanup", "none")
     subwf.uses(subdax_file, link=Link.INPUT, register=False)
     subwf.addProfile(Profile("dagman", "PRIORITY", "%d" % (priority)))
     subwf.addProfile(Profile("dagman", "CATEGORY", "subworkflow"))
@@ -106,7 +107,12 @@ def add_subwf(dax, id):
 
 # build a list of the receptors and ligands we want to process
 for rec in os.listdir(receptor_dir):
-    rec_names.append(rec)
+    full_path = os.path.join(receptor_dir, rec)
+    s = os.lstat(full_path)
+    if S_ISDIR(s.st_mode):
+        rec_names.append(rec)
+    else:
+        print "Ignoring receptor non-dir: %s" %(rec)
 find_ligands(ligand_dir)
 
 # top level workflow
