@@ -9,6 +9,7 @@ SUBWF_ID=$3
 START_DIR=`pwd`
 
 echo "Creating combined dat file..."
+mkdir -p $RUN_DIR/scratch/$RUN_ID/$SUBWF_ID
 cd $RUN_DIR/scratch/$RUN_ID/$SUBWF_ID/
 find . -type f -name '*.dat' -exec cat {} \; >ALL.fet 
 
