@@ -11,15 +11,19 @@ START_DIR=`pwd`
 echo "Creating combined dat file..."
 mkdir -p $RUN_DIR/scratch/$RUN_ID/$SUBWF_ID
 cd $RUN_DIR/scratch/$RUN_ID/$SUBWF_ID/
-find . -type f -name '*.dat' -exec cat {} \; >ALL.fet 
 
-cd ..
-find $SUBWF_ID -name \*.mol2 -print | grep -v ALL.mol2 >$SUBWF_ID/ALL.mol2
+rm -f $SUBWF_ID.idx
+rm -f $SUBWF_ID.fet
+rm -f $SUBWF_ID.mol2
+for DAT in `find . -type f -name '*.dat'`; do
+    BASE=`echo $DAT | sed 's/.dat$//' | sed 's/^\.\///'`
+    echo $BASE >>$SUBWF_ID.idx
+    cat $BASE.dat >>$SUBWF_ID.fet
+    cat $BASE.mol2 >>$SUBWF_ID.mol2
+done
 
-echo "Creating output tarball..."
-cd $RUN_DIR/scratch/$RUN_ID
 mkdir -p $RUN_DIR/outputs-tars
-tar czf $RUN_DIR/outputs-tars/$SUBWF_ID.tar.gz $SUBWF_ID
+mv $SUBWF_ID.idx $SUBWF_ID.fet $SUBWF_ID.mol2 $RUN_DIR/outputs-tars/
 
 exit 0
 

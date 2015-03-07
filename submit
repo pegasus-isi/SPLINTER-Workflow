@@ -14,6 +14,9 @@ fi
 
 TOP_DIR=`pwd`
 
+REC_DIR=`cd $REC_DIR && pwd`
+LIG_DIR=`cd $LIG_DIR && pwd`
+
 # unique directory for this run
 RUN_ID=`/bin/date +'%F_%H%M%S'`
 RUN_DIR=/local-scratch/$USER/workflows/splinter-$RUN_ID

@@ -73,7 +73,7 @@ def add_subwf(dax, id):
     subdax_gen.addProfile(Profile("hints", "executionPool", "local"))
     subdax_gen.addProfile(Profile("env", "PATH", os.environ['PATH']))
     subdax_gen.addProfile(Profile("env", "PYTHONPATH", os.environ['PYTHONPATH']))
-    subdax_gen.invoke("on_error", "/usr/share/pegasus/notification/email")
+    #subdax_gen.invoke("on_error", "/usr/share/pegasus/notification/email")
     dax.addJob(subdax_gen)
 
     # job to run subwf
@@ -87,7 +87,7 @@ def add_subwf(dax, id):
     subwf.uses(subdax_file, link=Link.INPUT, register=False)
     subwf.addProfile(Profile("dagman", "PRIORITY", "%d" % (priority)))
     subwf.addProfile(Profile("dagman", "CATEGORY", "subworkflow"))
-    subwf.invoke("on_error", "/usr/share/pegasus/notification/email")
+    #subwf.invoke("on_error", "/usr/share/pegasus/notification/email")
     dax.addDAX(subwf)
     dax.depends(parent=subdax_gen, child=subwf)
 
