@@ -20,6 +20,7 @@ run_id = sys.argv[1]
 run_dir = sys.argv[2]
 receptor_dir = sys.argv[3]
 ligand_dir = sys.argv[4]
+priority = int(sys.argv[5])
 
 # globals
 rec_names = []  
@@ -50,7 +51,6 @@ def splitlist(lst, slicelen):
 
 def add_subwf(dax, id):
 
-    priority = 10000 - id
     subdax_fname = "dax-%06d.xml" % id
 
     work_file = File("work-%06d.txt" % id)

@@ -5,14 +5,29 @@ set -e
 PROJECT=$1
 REC_DIR=$2
 LIG_DIR=$3
+PRIORITY=$4
 if [ "x$PROJECT" = "x" -o "x$REC_DIR" = "x" -o "x$LIG_DIR" = "x" ]; then
-    echo "Please specify the project id to charge the workflow usage to," 2>&1
-    echo "the receptor directory, and the ligand directory. Example:" 2>&1
-    echo "  ./submit TG-ABC123 /some/path/receptors /some/path/ligands" 2>&1
+    echo "Please specify the project id to charge the workflow usage to," 1>&2
+    echo "the receptor directory, and the ligand directory. Example:" 1>&2
+    echo "  ./submit TG-ABC123 inputs/rec inputs/lig" 1>&2
+    echo 1>&2
+    echo "A forth optional argument is for priority of the workflow. Example" 1>&2
+    echo "  ./submit TG-ABC123 inputs/rec inputs/lig 10000000" 1>&2
     exit 1
 fi
 
 TOP_DIR=`pwd`
+
+# project id sanity check
+if ! (grep -P "$PROJECT:.*$USER" /etc/xsede/projects) >/dev/null 2>&1; then
+    echo "It does not look like you are part of the $PROJECT project!" 1>&2
+    exit 1
+fi
+
+if [ "x$PRIORITY" = "x" ]; then
+    TS=`date +'%Y%m%d'`
+    PRIORITY=$((20200000 - $TS))
+fi
 
 REC_DIR=`cd $REC_DIR && pwd`
 LIG_DIR=`cd $LIG_DIR && pwd`
@@ -33,7 +48,7 @@ cd $RUN_DIR/
 
 # generate the dax
 export PYTHONPATH=`pegasus-config --python`
-./dax-generator.py $RUN_ID $RUN_DIR $REC_DIR $LIG_DIR
+./dax-generator.py $RUN_ID $RUN_DIR $REC_DIR $LIG_DIR $PRIORITY
 
 # create the site catalog
 cat >sites.xml <<EOF
