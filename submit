@@ -16,12 +16,14 @@ if [ "x$PROJECT" = "x" -o "x$REC_DIR" = "x" -o "x$LIG_DIR" = "x" ]; then
     exit 1
 fi
 
-TOP_DIR=`pwd`
+TOP_DIR=`pwd` 
 
-# project id sanity check
-if ! (grep -P "$PROJECT:.*$USER" /etc/xsede/projects) >/dev/null 2>&1; then
-    echo "It does not look like you are part of the $PROJECT project!" 1>&2
-    exit 1
+# project id sanity check for xd-login
+if [ -e /etc/xsede/projects ]; then
+    if ! (grep -P "$PROJECT:.*$USER" /etc/xsede/projects) >/dev/null 2>&1; then
+        echo "It does not look like you are part of the $PROJECT project!" 1>&2
+        exit 1
+    fi
 fi
 
 if [ "x$PRIORITY" = "x" ]; then
@@ -34,7 +36,10 @@ LIG_DIR=`cd $LIG_DIR && pwd`
 
 # unique directory for this run
 RUN_ID=`/bin/date +'%F_%H%M%S'`
-RUN_DIR=/local-scratch/$USER/workflows/splinter-$RUN_ID
+RUN_DIR=`pwd`/workflows/splinter-$RUN_ID
+if [ -e /local-scratch/$USER ]; then
+    RUN_DIR=/local-scratch/$USER/workflows/splinter-$RUN_ID
+fi
 mkdir -p $RUN_DIR
 cd $RUN_DIR
 

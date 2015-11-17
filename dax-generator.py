@@ -2,6 +2,7 @@
 
 from Pegasus.DAX3 import *
 
+import socket
 import sys
 import os
 from stat import *
@@ -70,7 +71,7 @@ def add_subwf(dax, id):
                             subdax_fname)
     subdax_gen.uses(work_file, link=Link.INPUT)
     subdax_gen.addProfile(Profile("dagman", "PRIORITY", "%d" % (priority)))
-    subdax_gen.addProfile(Profile("hints", "executionPool", "local"))
+    subdax_gen.addProfile(Profile("hints", "execution.site", "local"))
     subdax_gen.addProfile(Profile("env", "PATH", os.environ['PATH']))
     subdax_gen.addProfile(Profile("env", "PYTHONPATH", os.environ['PYTHONPATH']))
     #subdax_gen.invoke("on_error", "/usr/share/pegasus/notification/email")
@@ -98,7 +99,7 @@ def add_subwf(dax, id):
                             "%06d" % id)
     postsubdax.addProfile(Profile(Namespace.PEGASUS, "style", "condor"))
     postsubdax.addProfile(Profile(Namespace.CONDOR, "universe", "vanilla"))
-    postsubdax.addProfile(Profile(Namespace.CONDOR, "requirements", "TARGET.FileSystemDomain =?= \"xd-login.opensciencegrid.org\""))
+    postsubdax.addProfile(Profile(Namespace.CONDOR, "requirements", "TARGET.FileSystemDomain =?= \"" + socket.gethostname() + "\""))
     postsubdax.addProfile(Profile(Namespace.CONDOR, "+RunOnSubmitNode", "True"))
     postsubdax.addProfile(Profile("env", "PATH", os.environ['PATH']))
     dax.addJob(postsubdax)

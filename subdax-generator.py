@@ -2,6 +2,7 @@
 
 from Pegasus.DAX3 import *
 
+import socket
 import sys
 import os
 from stat import *
@@ -26,7 +27,7 @@ pt = Executable(namespace="pegasus", name="transfer", arch="x86_64", installed=T
 pt.addPFN(PFN("/usr/bin/pegasus-transfer", "local"))
 pt.addProfile(Profile(Namespace.PEGASUS, "style", "condor"))
 pt.addProfile(Profile(Namespace.CONDOR, "universe", "vanilla"))
-pt.addProfile(Profile(Namespace.CONDOR, "requirements", "TARGET.FileSystemDomain =?= \"xd-login.opensciencegrid.org\""))
+pt.addProfile(Profile(Namespace.CONDOR, "requirements", "TARGET.FileSystemDomain =?= \"" + socket.gethostname() + "\""))
 pt.addProfile(Profile(Namespace.CONDOR, "+RunOnSubmitNode", "True"))
 subdax.addExecutable(pt)
 
