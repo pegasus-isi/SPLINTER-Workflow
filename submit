@@ -36,7 +36,7 @@ LIG_DIR=`cd $LIG_DIR && pwd`
 
 # unique directory for this run
 RUN_ID=`/bin/date +'%F_%H%M%S'`
-RUN_DIR=`pwd`/workflows/splinter-$RUN_ID
+RUN_DIR=$HOME/workflows/splinter-$RUN_ID
 if [ -e /local-scratch/$USER ]; then
     RUN_DIR=/local-scratch/$USER/workflows/splinter-$RUN_ID
 fi
