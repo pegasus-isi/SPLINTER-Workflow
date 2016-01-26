@@ -10,7 +10,7 @@ pegasus.condor.logs.symlink = false
 pegasus.data.configuration = condorio
 
 dagman.subworkflow.maxjobs = 100
-dagman.maxidle = 50
+dagman.maxidle = 100
 dagman.maxpre = 1
 
 pegasus.transfer.bypass.input.staging = true
