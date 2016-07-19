@@ -37,9 +37,16 @@ LIG_DIR=`cd $LIG_DIR && pwd`
 # unique directory for this run
 RUN_ID=`/bin/date +'%F_%H%M%S'`
 RUN_DIR=$HOME/workflows/splinter-$RUN_ID
+
+# The home dir for xd-login
 if [ -e /local-scratch/$USER ]; then
     RUN_DIR=/local-scratch/$USER/workflows/splinter-$RUN_ID
 fi
+# This is for csiu.grid.iu.edu
+if [ -e /net/nas01/Public ]; then
+    RUN_DIR=/net/nas01/Public/$USER/workflows/splinter-$RUN_ID
+fi
+
 mkdir -p $RUN_DIR
 cd $RUN_DIR
 
